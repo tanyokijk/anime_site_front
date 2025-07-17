@@ -64,7 +64,10 @@ const minYear = 1965;
 const maxYear = 2025;
 const itemsPerPage = 30;
 
-export default function StudioPage({ params }: { params: { slug: string } }) {
+export default function StudioPage({ params }: { params: Promise<{ slug: string }> }) {
+  // Розпаковуємо params за допомогою React.use()
+  const resolvedParams = React.use(params);
+  
   const [filters, setFilters] = useState<FiltersState>({
     status: [],
     season: [],
@@ -111,7 +114,7 @@ export default function StudioPage({ params }: { params: { slug: string } }) {
     s.label.toLowerCase().includes(studiosSearch.toLowerCase())
   );
 
-  // Filter handlers (toggleFilter, setSingleFilter, clearFilters)
+  // Filter handlers
   const toggleFilter = useCallback(
     <K extends string | number | symbol>(key: K, value: string) => {
       if (["status", "season", "genres", "type", "age"].includes(key as string)) {
@@ -205,6 +208,13 @@ export default function StudioPage({ params }: { params: { slug: string } }) {
 
   // Fetch anime list and studio info with filters, search and pagination
   const fetchAnimeData = useCallback(async (search?: string) => {
+    console.log("🚀 fetchAnimeData викликано з параметрами:", {
+      search,
+      currentPage,
+      slug: resolvedParams.slug,
+      filters
+    });
+    
     setLoading(true);
     try {
       const queryParams = new URLSearchParams();
@@ -225,20 +235,28 @@ export default function StudioPage({ params }: { params: { slug: string } }) {
       if (filters.year[1]) queryParams.append("year_to", filters.year[1].toString());
       if (filters.localized) queryParams.append("localized", "1");
   
-      const slugToUse = studioInfo?.slug || params.slug;
+      const slugToUse = studioInfo?.slug || resolvedParams.slug;
       const url = `http://127.0.0.1:8000/api/v1/studios/${slugToUse}/animes?${queryParams.toString()}`;
+      
+      console.log("📡 Відправляємо запит на URL:", url);
   
       const res = await fetch(url);
-      if (!res.ok) throw new Error("Помилка при завантаженні аніме");
+      if (!res.ok) {
+        console.error("❌ Помилка HTTP:", res.status, res.statusText);
+        throw new Error(`Помилка ${res.status}: ${res.statusText}`);
+      }
   
       const json = await res.json();
+      console.log("📥 Отримані дані:", json);
   
-      if (json.data && json.data.length > 0) {
+      if (json.data && Array.isArray(json.data)) {
+        console.log("✅ Знайдено аніме:", json.data.length);
         setAnimeList(json.data);
   
         // Встановлюємо studioInfo, якщо ще не встановлено
-        if (!studioInfo) {
+        if (!studioInfo && json.data.length > 0) {
           const studio = json.data[0].studio;
+          console.log("🏢 Встановлюємо інформацію про студію:", studio);
           setStudioInfo({
             name: studio.name,
             description: studio.description,
@@ -247,22 +265,46 @@ export default function StudioPage({ params }: { params: { slug: string } }) {
           });
         }
   
-        // Встановлюємо totalPages, якщо у відповіді є таке поле (припускаю json.meta.last_page або json.meta.total_pages)
-        if (json.meta?.last_page) setTotalPages(json.meta.last_page);
-        else if (json.meta?.total_pages) setTotalPages(json.meta.total_pages);
-        else setTotalPages(1);
+        // Встановлюємо totalPages
+        if (json.meta?.last_page) {
+          setTotalPages(json.meta.last_page);
+        } else if (json.meta?.total_pages) {
+          setTotalPages(json.meta.total_pages);
+        } else {
+          setTotalPages(1);
+        }
       } else {
+        console.log("⚠️ Немає даних або дані не є масивом:", json);
         setAnimeList([]);
         setTotalPages(1);
       }
     } catch (error) {
-      console.error("Помилка при завантаженні:", error);
+      console.error("💥 Помилка при завантаженні:", error);
       setAnimeList([]);
       setTotalPages(1);
     } finally {
       setLoading(false);
     }
-  }, [studioInfo, params.slug, currentPage, filters]);
+  }, [studioInfo, resolvedParams.slug, currentPage, filters]);
+
+  // Викликаємо fetchAnimeData при завантаженні компонента
+  useEffect(() => {
+    console.log("🔄 useEffect для початкового завантаження");
+    fetchAnimeData();
+  }, [resolvedParams.slug]); // Залежить тільки від slug
+
+  // Викликаємо fetchAnimeData при зміні фільтрів або сторінки
+  useEffect(() => {
+    console.log("🔄 useEffect для фільтрів/сторінки");
+    fetchAnimeData(searchQuery);
+  }, [currentPage, filters]);
+
+  // Обробник пошуку
+  const handleSearch = useCallback(() => {
+    console.log("🔍 Пошук:", searchQuery);
+    setCurrentPage(1);
+    fetchAnimeData(searchQuery);
+  }, [searchQuery, fetchAnimeData]);
 
   return (
     <div className="min-h-screen px-2 py-8 text-white sm:px-8">
@@ -286,19 +328,18 @@ export default function StudioPage({ params }: { params: { slug: string } }) {
         <div className="flex-1">
           {/* Search input */}
           <div className="relative mb-6 flex items-center">
-          <input
-  type="text"
-  placeholder="Введіть назву аніме..."
-  className="w-full rounded-lg border border-[#232B39] bg-[#181F2A] px-4 py-2 text-white placeholder-gray-400 focus:outline-none"
-  value={searchQuery}
-  onChange={(e) => setSearchQuery(e.target.value)}
-  onKeyDown={(e) => {
-    if (e.key === "Enter") {
-      setCurrentPage(1);
-      fetchAnimeData(searchQuery); // ← тут пошук по назві
-    }
-  }}
-/>
+            <input
+              type="text"
+              placeholder="Введіть назву аніме..."
+              className="w-full rounded-lg border border-[#232B39] bg-[#181F2A] px-4 py-2 text-white placeholder-gray-400 focus:outline-none"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSearch();
+                }
+              }}
+            />
             <button
               className="absolute top-1/2 right-2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg bg-[#232B39] hover:bg-[#2C3545] sm:hidden"
               onClick={() => setFiltersOpen(true)}
@@ -310,22 +351,36 @@ export default function StudioPage({ params }: { params: { slug: string } }) {
             </button>
           </div>
 
+          {/* Debug info */}
+          {/* <div className="mb-4 rounded bg-gray-800 p-2 text-xs">
+            <div>Loading: {loading ? "true" : "false"}</div>
+            <div>Anime count: {animeList.length}</div>
+            <div>Studio slug: {resolvedParams.slug}</div>
+            <div>Current page: {currentPage}</div>
+            <div>Total pages: {totalPages}</div>
+          </div> */}
+
           {/* Anime grid */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
             {loading ? (
-              <p>Завантаження...</p>
+              <div className="col-span-full text-center">
+                <p>Завантаження...</p>
+              </div>
             ) : animeList.length === 0 ? (
-              <p>Аніме не знайдено.</p>
+              <div className="col-span-full text-center">
+                <p>Аніме не знайдено.</p>
+              </div>
             ) : (
               animeList.map((anime) => (
                 <TopAnimeCard
                   key={anime.id}
                   image={anime.poster}
+                  slug={anime.slug}
                   title={anime.name}
                   year={anime.first_air_date ? new Date(anime.first_air_date).getFullYear() : undefined}
-                  type={anime.kind}
+                  kind={anime.kind}
                   rank={null}
-                  rating={anime.imdb_score}
+                  imdb_score={anime.imdb_score}
                   showRank={false}
                   href={`/anime/${anime.slug}`}
                   small={true}
@@ -340,7 +395,10 @@ export default function StudioPage({ params }: { params: { slug: string } }) {
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={(page) => {
-                if (page >= 1 && page <= totalPages) setCurrentPage(page);
+                if (page >= 1 && page <= totalPages) {
+                  console.log("📄 Зміна сторінки на:", page);
+                  setCurrentPage(page);
+                }
               }}
             />
           </div>
@@ -354,27 +412,10 @@ export default function StudioPage({ params }: { params: { slug: string } }) {
             setSingleFilter={setSingleFilter}
             setYearRange={setYearRange}
             clearFilters={clearFilters}
-            genres={genres}
-            genresOpen={genresOpen}
-            genresRef={genresRef}
-            handleGenresClick={handleGenresClick}
-            handleGenresOptionClick={handleGenresOptionClick}
-            handleGenresClear={handleGenresClear}
-            handleGenresTagRemove={handleGenresTagRemove}
             types={types}
             statuses={statuses}
             seasons={seasons}
             ageRatings={ageRatings}
-            //studios={studios}
-            // studiosOpen={studiosOpen}
-            // studiosRef={studiosRef}
-            // studiosSearch={studiosSearch}
-            // handleStudiosClick={handleStudiosClick}
-            // handleStudiosSearch={handleStudiosSearch}
-            // filteredStudios={filteredStudios}
-            // handleStudiosOptionClick={handleStudiosOptionClick}
-            // handleStudiosClear={handleStudiosClear}
-            // handleStudiosTagRemove={handleStudiosTagRemove}
             minYear={minYear}
             maxYear={maxYear}
             isMobile={false}
@@ -394,27 +435,10 @@ export default function StudioPage({ params }: { params: { slug: string } }) {
                 setSingleFilter={setSingleFilter}
                 setYearRange={setYearRange}
                 clearFilters={clearFilters}
-                genres={genres}
-                genresOpen={genresOpen}
-                genresRef={genresRef}
-                handleGenresClick={handleGenresClick}
-                handleGenresOptionClick={handleGenresOptionClick}
-                handleGenresClear={handleGenresClear}
-                handleGenresTagRemove={handleGenresTagRemove}
                 types={types}
                 statuses={statuses}
                 seasons={seasons}
                 ageRatings={ageRatings}
-                // studios={studios}
-                // studiosOpen={studiosOpen}
-                // studiosRef={studiosRef}
-                // studiosSearch={studiosSearch}
-                // handleStudiosClick={handleStudiosClick}
-                // handleStudiosSearch={handleStudiosSearch}
-                // filteredStudios={filteredStudios}
-                // handleStudiosOptionClick={handleStudiosOptionClick}
-                // handleStudiosClear={handleStudiosClear}
-                // handleStudiosTagRemove={handleStudiosTagRemove}
                 minYear={minYear}
                 maxYear={maxYear}
                 isMobile={true}

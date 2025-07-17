@@ -9,8 +9,9 @@ interface AnimeShort {
 interface GenreCardProps {
   name: string;
   description: string;
-  slug:string;
+  slug: string;
   animes_posters: AnimeShort[];
+  type?: 'genre' | 'tag'; // More specific type definition
 }
 
 const GenreCard: React.FC<GenreCardProps> = ({
@@ -18,6 +19,7 @@ const GenreCard: React.FC<GenreCardProps> = ({
   description,
   slug,
   animes_posters,
+  type = 'genre' // Default to 'genre'
 }) => {
   const [isMobile, setIsMobile] = useState<null | boolean>(null);
 
@@ -32,9 +34,11 @@ const GenreCard: React.FC<GenreCardProps> = ({
 
   if (isMobile === null) return null;
 
-console.log({animes_posters});
+  // Determine the link path based on type
+  const linkPath = type === 'tag' ? `/tags/${slug}` : `/genres/${slug}`;
+
   return (
-    // <Link href={href} className="block w-full group" tabIndex={0}>
+    <Link href={linkPath} className="block w-full group" tabIndex={0}>
       <div className="w-full flex flex-row relative cursor-pointer group-hover:opacity-90 transition-opacity">
         <div className="flex flex-col justify-start z-10 flex-shrink-0 w-[200px] md:w-[300px] lg:w-[420px]">
           <h2 className="text-white text-3xl font-bold mb-6 leading-tight">
@@ -47,27 +51,29 @@ console.log({animes_posters});
 
         <div className="flex items-center ml-3 md:ml-12 flex-grow w-full">
           <div className="flex flex-row items-center relative">
-          {Array.isArray(animes_posters) && (isMobile ? animes_posters.slice(0, 1) : animes_posters).map((item, idx) => (
-  <div
-    key={idx}
-    className="relative"
-    style={{
-      zIndex: animes_posters.length - idx,
-      marginLeft: idx === 0 ? 0 : -16,
-    }}
-  >
-    <div className="rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-purple-600 to-blue-600 w-32 h-48 md:w-[140px] md:h-[200px]">
-      <Image
-        src={item.poster}
-        alt={`anime-${idx}`}
-        fill
-        className="w-full h-full object-cover"
-        style={{ filter: "brightness(0.9) contrast(1.1)" }}
-      />
-    </div>
-  </div>
-))}
-
+            {Array.isArray(animes_posters) &&
+              (isMobile ? animes_posters.slice(0, 1) : animes_posters).map(
+                (item, idx) => (
+                  <div
+                    key={idx}
+                    className="relative"
+                    style={{
+                      zIndex: animes_posters.length - idx,
+                      marginLeft: idx === 0 ? 0 : -16,
+                    }}
+                  >
+                    <div className="rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-purple-600 to-blue-600 w-32 h-48 md:w-[140px] md:h-[200px]">
+                      <Image
+                        src={item.poster}
+                        alt={`anime-${idx}`}
+                        fill
+                        className="w-full h-full object-cover"
+                        style={{ filter: "brightness(0.9) contrast(1.1)" }}
+                      />
+                    </div>
+                  </div>
+                )
+              )}
           </div>
           <div className="flex-grow" />
           <div className="ml-3 md:ml-8 flex items-center justify-end">
@@ -94,7 +100,7 @@ console.log({animes_posters});
           </div>
         </div>
       </div>
-    // </Link>
+    </Link>
   );
 };
 

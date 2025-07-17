@@ -306,7 +306,7 @@ const perPage = 20;
 
 export default function GenrePage() {
   const params = useParams();
-  const genreSlug = params?.slug?.toString() || "";
+  const genreSlug = params?.slug ? decodeURIComponent(params.slug.toString()) : "";
 
   const [genreName, setGenreName] = useState<string>("");
   const [sort, setSort] = useState("az");
@@ -335,37 +335,47 @@ export default function GenrePage() {
     if (lastAnimeRef.current) observer.current.observe(lastAnimeRef.current);
     return () => observer.current?.disconnect();
   }, [animes, handleObserver]);
-
+if (!genreSlug && !loading) {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="text-white">Завантаження жанру...</div>
+    </div>
+  );
+}
   // Fetch genre info and first page on sort/genre change
   useEffect(() => {
-    if (!genreSlug) return;
-    setLoading(true);
-    setError(null);
-    setPage(1);
-    setAnimes([]);
-    setHasMore(true);
-    const sortParam = apiSortMap[sort] || "name";
-    fetch(
-      `http://127.0.0.1:8000/api/v1/genres/${genreSlug}?sort_anime=${sortParam}&page=1&per_page=${perPage}`,
-    )
-      .then((res) => {
-        if (!res.ok) throw new Error("Помилка при завантаженні");
-        return res.json();
-      })
-      .then((json) => {
-        setAnimes(json.data.animes || []);
-        setHasMore((json.data.animes || []).length >= perPage);
-        if (json.data.name) setGenreName(json.data.name);
-        else setGenreName(genreSlug);
-      })
-      .catch((e) => {
-        setError(e.message || "Помилка при завантаженні");
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-    // eslint-disable-next-line
-  }, [genreSlug, sort]);
+  if (!genreSlug) return;
+  setLoading(true);
+  setError(null);
+  setPage(1);
+  setAnimes([]);
+  setHasMore(true);
+  
+  const sortParam = apiSortMap[sort] || "name";
+  fetch(`http://127.0.0.1:8000/api/v1/genres/${encodeURIComponent(genreSlug)}?sort_anime=${sortParam}&page=1&per_page=${perPage}`)
+    .then((res) => {
+      if (res.status === 404) {
+        throw new Error("Жанр не знайдено");
+      }
+      if (!res.ok) throw new Error("Помилка при завантаженні");
+      return res.json();
+    })
+    .then((json) => {
+      if (!json.data) {
+        throw new Error("Дані не знайдені");
+      }
+      setAnimes(json.data.animes || []);
+      setHasMore((json.data.animes || []).length >= perPage);
+      setGenreName(json.data.name || genreSlug);
+    })
+    .catch((e) => {
+      setError(e.message || "Помилка при завантаженні");
+      setGenreName(genreSlug); // Still show the slug in the title even if error
+    })
+    .finally(() => {
+      setLoading(false);
+    });
+}, [genreSlug, sort]);
 
   // Fetch more animes when page increases (except for first page)
   useEffect(() => {
@@ -373,6 +383,7 @@ export default function GenrePage() {
     setLoading(true);
     setError(null);
     const sortParam = apiSortMap[sort] || "name";
+    
     fetch(
       `http://127.0.0.1:8000/api/v1/genres/${genreSlug}?sort_anime=${sortParam}&page=${page}&per_page=${perPage}`,
     )
@@ -450,10 +461,11 @@ export default function GenrePage() {
                 <TopAnimeCard
                   image={anime.image}
                   title={anime.title}
+                  slug={anime.slug}
                   year={anime.year}
-                  type={anime.type}
+                  kind={anime.type}
                   rank={anime.rank}
-                  rating={anime.rating}
+                  imdb_score={anime.rating}
                   showRank={false}
                   href={`/anime/${anime.slug}`}
                   cardClassName="w-full min-w-0"

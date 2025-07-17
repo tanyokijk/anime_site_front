@@ -151,11 +151,12 @@ export default function TagPage() {
               <TopAnimeCard
                 key={anime.slug}
                 image={anime.poster}
+                slug={anime.slug}
                 title={anime.name}
                 year={new Date(anime.first_air_date).getFullYear()}
-                type={anime.kind}
+                kind={anime.kind}
                 rank={idx + 1}
-                rating={anime.imdb_score}
+                imdb_score={anime.imdb_score}
                 showRank={false}
                 href={`/anime/${anime.slug}`}
                 cardClassName="min-w-0 w-auto"

@@ -230,7 +230,7 @@ const SettingsProfileTab: React.FC<SettingsProfileTabProps> = ({
             className="bg-transparent border border-[#49638A] rounded-lg px-4 py-2 text-white text-base focus:border-blue-400 focus:ring-0 placeholder:text-[#bfc6d5]"
             placeholder="Введіть нове ім'я"
           />
-          <BlueButton text="Зберегти" className="mt-2 w-32" />
+          {/* <BlueButton text="Зберегти" className="mt-2 w-32" /> */}
         </div>
         
         <div className="flex flex-col gap-2">
@@ -249,10 +249,10 @@ const SettingsProfileTab: React.FC<SettingsProfileTabProps> = ({
           <div className="text-[#bfc6d5] text-xs text-right">
             {about.length}/500 символів
           </div>
-          <BlueButton text="Зберегти" className="mt-2 w-32" />
+          {/* <BlueButton text="Зберегти" className="mt-2 w-32" /> */}
         </div>
 
-        <div className="flex flex-col gap-2">
+        {/* <div className="flex flex-col gap-2">
           <label htmlFor="birthdate" className="text-white text-base font-medium">
             Дата народження
           </label>
@@ -264,9 +264,9 @@ const SettingsProfileTab: React.FC<SettingsProfileTabProps> = ({
             className="bg-transparent border border-[#49638A] rounded-lg px-4 py-2 text-white text-base focus:border-blue-400 focus:ring-0"
             max={new Date(new Date().setFullYear(new Date().getFullYear() - 10)).toISOString().split('T')[0]}
           />
-        </div>
+        </div> */}
 
-        <div className="flex flex-col gap-2">
+        {/* <div className="flex flex-col gap-2">
           <label htmlFor="gender" className="text-white text-base font-medium">
             Стать
           </label>
@@ -276,7 +276,7 @@ const SettingsProfileTab: React.FC<SettingsProfileTabProps> = ({
             options={genderOptions}
             placeholder="Виберіть стать"
           />
-        </div>
+        </div> */}
       </form>
       
       {/* Інформація про pending файли */}

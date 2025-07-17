@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutGrid, Users, Tag, List, ChevronDown, Play, BookOpen, Link2, Image as ImageIcon, UserCheck } from "lucide-react";
+import { LayoutGrid, Users, Tag, List, ChevronDown, Play, BookOpen,Film, Link2, Image as ImageIcon, UserCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { Menu } from "@headlessui/react";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ const NAV_ITEMS = [
   { label: "Персонажі", href: "/characters", icon: Users },
   { label: "Жанри", href: "/genres", icon: List },
   { label: "Теги", href: "/tags", icon: Tag },
+  { label: "Студії", href: "/studios", icon: Film },
 ];
 
 const Navbar: React.FC = () => {
@@ -48,23 +49,23 @@ const Navbar: React.FC = () => {
   const notifBtnRef = React.useRef<HTMLButtonElement>(null);
 
   // Fetch unread notifications count
-  const fetchUnreadCount = React.useCallback(async () => {
-    if (!isAuthenticated || !token) return;
+  // const fetchUnreadCount = React.useCallback(async () => {
+  //   if (!isAuthenticated || !token) return;
 
-    try {
-      const authenticatedFetch = createAuthenticatedFetch(token);
-      const response = await authenticatedFetch(
-        `${API_BASE_URL}notifications/unread-count`,
-      );
+  //   try {
+  //     const authenticatedFetch = createAuthenticatedFetch(token);
+  //     const response = await authenticatedFetch(
+  //       `${API_BASE_URL}notifications/unread-count`,
+  //     );
 
-      if (response.ok) {
-        const data = await response.json();
-        setUnreadCount(data.count || 0);
-      }
-    } catch (error) {
-      console.error("Failed to fetch unread notifications count:", error);
-    }
-  }, [isAuthenticated, token]);
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       setUnreadCount(data.count || 0);
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to fetch unread notifications count:", error);
+  //   }
+  // }, [isAuthenticated, token]);
 
   // Fetch anime name and first episode by slug
   const fetchAnimeData = React.useCallback(async (slug: string) => {
@@ -113,13 +114,13 @@ const Navbar: React.FC = () => {
   }, []);
 
   // Fetch unread count when user is authenticated
-  React.useEffect(() => {
-    if (isAuthenticated) {
-      fetchUnreadCount();
-    } else {
-      setUnreadCount(0);
-    }
-  }, [isAuthenticated, fetchUnreadCount]);
+  // React.useEffect(() => {
+  //   if (isAuthenticated) {
+  //     fetchUnreadCount();
+  //   } else {
+  //     setUnreadCount(0);
+  //   }
+  // }, [isAuthenticated, fetchUnreadCount]);
 
   // Handle notification read (callback for NotificationModal)
   const handleNotificationsRead = React.useCallback(() => {
@@ -132,11 +133,11 @@ const Navbar: React.FC = () => {
       const newState = !v;
       // If opening the modal, refresh unread count after a short delay
       // to account for any read status changes
-      if (newState) {
-        setTimeout(() => {
-          fetchUnreadCount();
-        }, 500);
-      }
+      // if (newState) {
+      //   setTimeout(() => {
+      //     fetchUnreadCount();
+      //   }, 500);
+      // }
       return newState;
     });
   };

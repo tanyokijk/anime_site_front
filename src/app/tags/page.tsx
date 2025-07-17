@@ -205,6 +205,7 @@ export default function TagsPage() {
                       name={tag.name}
                       description={tag.description}
                       slug={tag.slug}
+                      type="tag"
                       animes_posters={images.map(poster => ({ poster }))}
                     />
                   </div>

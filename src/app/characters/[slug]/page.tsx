@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import CardCollection from "@/components/main-page/card-collection";
 import VoiceActorCard from "@/components/voice-actor-card";
@@ -37,8 +37,11 @@ interface VoiceActorCardData {
 export default function CharacterPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
+  // Розпаковуємо params за допомогою React.use()
+  const resolvedParams = React.use(params);
+  
   const [character, setCharacter] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +52,7 @@ export default function CharacterPage({
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_BASE_URL}people/${params.slug}`, {
+        const res = await fetch(`${API_BASE_URL}people/${resolvedParams.slug}`, {
           cache: "no-store",
         });
         if (!res.ok) throw new Error("Помилка завантаження персонажа");
@@ -66,7 +69,7 @@ export default function CharacterPage({
     return () => {
       ignore = true;
     };
-  }, [params.slug]);
+  }, [resolvedParams.slug]);
 
   if (loading) {
     return (
@@ -186,7 +189,7 @@ export default function CharacterPage({
             <CardCollection
               title="Аніме"
               items={mappedAnimes}
-              cardType="top-anime"
+              cardType="anime"
             />
 
             {voiceActorCards.length > 0 && (
