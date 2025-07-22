@@ -11,10 +11,12 @@ const nextConfig = {
       "images.unsplash.com",
       "via.placeholder.com",
       "upload.wikimedia.org",
+      "peach.blender.org",
       "static.wikia.nocookie.net",
-      'storageanimesite.blob.core.windows.net',
-      'lh3.googleusercontent.com',
-      'https://www.youtube.com'
+      "storageanimesite.blob.core.windows.net",
+      "lh3.googleusercontent.com",
+      "api.dicebear.com",
+      "https://www.youtube.com",
     ],
   },
   webpack(config) {

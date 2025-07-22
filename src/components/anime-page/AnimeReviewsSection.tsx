@@ -140,12 +140,12 @@ const AnimeReviewsSection: React.FC<AnimeReviewsSectionProps> = ({
     e.preventDefault();
     
     if (!token) {
-      alert("Увійдіть в систему для залишення відгуку");
+      // alert("Увійдіть в систему для залишення відгуку");
       return;
     }
 
     if (rating === 0) {
-      alert("Оберіть рейтинг");
+      // alert("Оберіть рейтинг");
       return;
     }
 
@@ -172,7 +172,7 @@ const AnimeReviewsSection: React.FC<AnimeReviewsSectionProps> = ({
         alert("Відгук успішно додано!");
       } else {
         const errorData = await response.json();
-        alert(`Помилка: ${errorData.message || "Не вдалося додати відгук"}`);
+        // alert(`Помилка: ${errorData.message || "Не вдалося додати відгук"}`);
       }
     } catch (error) {
       console.error("Помилка при відправці відгуку:", error);

@@ -28,7 +28,7 @@ const AnimeEpisodesSection: React.FC<AnimeEpisodesSectionProps> = ({
   isLoading = false,
 }) => {
   const [episodeOrder, setEpisodeOrder] = useState<"newest" | "oldest">("oldest");
-const pathname = usePathname();
+  const pathname = usePathname();
   const filteredEpisodes = [...episodes];
   if (episodeOrder === "newest") filteredEpisodes.reverse();
 
@@ -71,17 +71,17 @@ const pathname = usePathname();
       <div className="flex gap-8 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-[#44454A] scrollbar-track-transparent">
         {isLoading
           ? Array.from({ length: 3 }).map((_, i) => (
-            
-              <div
-                key={i}
-                className="flex flex-col min-w-[210px] md:min-w-[220px] max-w-[240px]"
-              >
-                <Skeleton height={120} className="mb-3" />
-                <Skeleton height={18} width={120} className="mb-1" />
-                <Skeleton height={18} width={160} className="mb-1" />
-                <Skeleton height={18} width={100} />
-              </div>
-            ))
+
+            <div
+              key={i}
+              className="flex flex-col min-w-[210px] md:min-w-[220px] max-w-[240px]"
+            >
+              <Skeleton height={120} className="mb-3" />
+              <Skeleton height={18} width={120} className="mb-1" />
+              <Skeleton height={18} width={160} className="mb-1" />
+              <Skeleton height={18} width={100} />
+            </div>
+          ))
           : filteredEpisodes.map((ep) => (
             <Link key={ep.id} href={`${pathname}/watch/${ep.slug}`}>
               <div
@@ -89,17 +89,17 @@ const pathname = usePathname();
                 className="flex flex-col min-w-[210px] md:min-w-[220px] max-w-[240px]"
               >
                 <div className="relative w-full aspect-video rounded-xl overflow-hidden mb-3">
-                <Image
-  src={
-    Array.isArray(ep.pictures)
-      ? ep.pictures[0] // перша картинка з масиву
-      : ep.pictures || "/assets/default-image.jpg" // одиночна або дефолтна
-  }
-  alt={ep.name}
-  fill
-  className="w-full h-full object-cover"
-  style={{ objectFit: "cover" }}
-/>
+                  <Image
+                    src={
+                      Array.isArray(ep.pictures)
+                        ? ep.pictures[0] // перша картинка з масиву
+                        : ep.pictures || "/assets/default-image.jpg" // одиночна або дефолтна
+                    }
+                    alt={ep.name}
+                    fill
+                    className="w-full h-full object-cover"
+                    style={{ objectFit: "cover" }}
+                  />
                   <button className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/60 transition cursor-pointer">
                     <svg
                       width="80"
@@ -119,12 +119,12 @@ const pathname = usePathname();
                 {/* <div className="text-[#B6B6B6] text-sm flex items-center gap-2">
                   {ep.audio} <span className="mx-2">|</span> {ep.subs}
                 </div> */}
-                
+
               </div>
             </Link>
-            ))}
+          ))}
       </div>
-      
+
     </div>
   );
 };

@@ -84,7 +84,7 @@ interface SettingsState {
   myAnime: boolean;
   userFollow: boolean;
   system: boolean;
-  
+
   // Всі нові поля нотифікацій
   newEpisodes: boolean;
   episodeDateChanges: boolean;
@@ -226,7 +226,7 @@ const SettingsMenu = () => {
     myAnime,
     userFollow,
     system,
-    
+
     // Всі нові поля нотифікацій
     newEpisodes,
     episodeDateChanges,
@@ -268,10 +268,10 @@ const SettingsMenu = () => {
     Object.keys(currentSettings).forEach((key) => {
       const currentValue = currentSettings[key as keyof SettingsState];
       const initialValue = initialSettings.current![key as keyof SettingsState];
-      
+
       if (currentValue !== initialValue) {
         console.log(`Поле ${key} змінилось: ${initialValue} -> ${currentValue}`);
-        
+
         // Маппінг полів до API формату
         switch (key) {
           case 'username':
@@ -301,7 +301,7 @@ const SettingsMenu = () => {
           case 'isPrivateFavorites':
             changes.is_private_favorites = currentValue;
             break;
-          
+
           // OLD notification fields
           case 'commentReply':
             changes.notify_comment_replies = currentValue;
@@ -341,7 +341,7 @@ const SettingsMenu = () => {
             changes.notify_maintenance = currentValue;
             changes.notify_security_changes = currentValue;
             break;
-            
+
           // NEW notification fields
           case 'newEpisodes':
             changes.notify_new_episodes = currentValue;
@@ -412,7 +412,7 @@ const SettingsMenu = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const authenticatedFetch = createAuthenticatedFetch(token);
       const response = await authenticatedFetch(`${API_BASE_URL}settings`);
 
@@ -502,7 +502,7 @@ const SettingsMenu = () => {
             securityChanges,
             newFeatures,
           });
-          
+
           const initialState: SettingsState = {
             username: settings.name || "",
             about: settings.description || "",
@@ -513,7 +513,7 @@ const SettingsMenu = () => {
             isAutoPlay: settings.is_auto_play,
             isAutoSkipIntro: settings.is_auto_skip_intro,
             isPrivateFavorites: settings.is_private_favorites,
-            
+
             // OLD notification fields
             commentReply: settings.notify.comment_replies,
             commentMention: settings.notify.comment_likes,
@@ -527,7 +527,7 @@ const SettingsMenu = () => {
             myAnime: settings.notify.episode_date_changes,
             userFollow: settings.notify.announcement_to_ongoing,
             system: settings.notify.site_updates || settings.notify.maintenance || settings.notify.security_changes,
-            
+
             // NEW notification fields - використовуємо значення з response
             newEpisodes: settings.notify.new_episodes,
             episodeDateChanges: settings.notify.episode_date_changes,
@@ -548,7 +548,7 @@ const SettingsMenu = () => {
             securityChanges: settings.notify.security_changes,
             newFeatures: settings.notify.new_features,
           };
-          
+
           initialSettings.current = initialState;
           console.log("Initial settings ВСТАНОВЛЕНО:", initialSettings.current);
           setInitialSettingsReady(true); // Повідомляємо, що ініціалізація завершена
@@ -574,7 +574,7 @@ const SettingsMenu = () => {
     const changes = getChangedFields();
     const hasFieldChanges = Object.keys(changes).length > 0;
     const hasFileChanges = pendingAvatarFile || pendingCoverFile;
-    
+
     console.log("hasChanges перевірка:", {
       hasFieldChanges,
       hasFileChanges,
@@ -583,7 +583,7 @@ const SettingsMenu = () => {
       pendingCoverFile: !!pendingCoverFile,
       initialSettingsReady
     });
-    
+
     return hasFieldChanges || hasFileChanges;
   };
 
@@ -592,7 +592,7 @@ const SettingsMenu = () => {
     if (initialSettingsReady) {
       console.log("🎯 initialSettings ініціалізовано та готовий до використання!");
       console.log("Перевіряємо hasChanges одразу після ініціалізації:", hasChanges());
-      
+
       // Тестуємо getCurrentSettings
       const current = getCurrentSettings();
       console.log("getCurrentSettings результат:", current);
@@ -606,7 +606,7 @@ const SettingsMenu = () => {
     if (initialSettingsReady && initialSettings.current) {
       const changes = hasChanges();
       console.log("Стан змін після оновлення:", changes);
-      
+
       // Додаткове логування для конкретних полів нотифікацій
       console.log("Приклад перевірки newEpisodes:", {
         current: newEpisodes,
@@ -636,7 +636,7 @@ const SettingsMenu = () => {
   // API call effect
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     if (mounted && isAuthenticated && token) {
       fetchUserSettings();
     }
@@ -648,7 +648,7 @@ const SettingsMenu = () => {
 
     const changes = getChangedFields();
     const hasFiles = pendingAvatarFile || pendingCoverFile;
-    
+
     // Якщо немає змін і немає файлів, не робимо запит
     if (Object.keys(changes).length === 0 && !hasFiles) {
       console.log("Немає змін для збереження");
@@ -666,18 +666,18 @@ const SettingsMenu = () => {
       setError(null);
 
       const authenticatedFetch = createAuthenticatedFetch(token);
-      
+
       // Використовуємо FormData якщо є файли, інакше JSON
       if (hasFiles) {
         const formData = new FormData();
-        
+
         // Додаємо зміни як окремі поля
         Object.entries(changes).forEach(([key, value]) => {
           if (value !== null && value !== undefined) {
             formData.append(key, String(value));
           }
         });
-        
+
         // Додаємо файли з правильними назвами
         if (pendingAvatarFile) {
           const fileExtension = pendingAvatarFile.name.split('.').pop();
@@ -693,7 +693,7 @@ const SettingsMenu = () => {
           });
           formData.append("backdrop", backdropFile);
         }
-        
+
         const response = await authenticatedFetch(`${API_BASE_URL}settings`, {
           method: "PATCH",
           headers: {
@@ -705,7 +705,7 @@ const SettingsMenu = () => {
         if (response.ok) {
           const data = await response.json();
           console.log("Успішно збережено з файлами:", data);
-          
+
           // Оновлюємо URL з відповіді сервера
           if (pendingAvatarFile && (data.avatar || data.data?.avatar)) {
             setAvatar(data.avatar || data.data.avatar);
@@ -713,14 +713,14 @@ const SettingsMenu = () => {
           if (pendingCoverFile && (data.backdrop || data.data?.backdrop)) {
             setCover(data.backdrop || data.data.backdrop);
           }
-          
+
           // Очищуємо pending файли
           setPendingAvatarFile(null);
           setPendingCoverFile(null);
-          
+
           // Оновлюємо початкові значення
           initialSettings.current = getCurrentSettings();
-          
+
         } else {
           const errorData = await response.text();
           console.error("Помилка збереження з файлами:", errorData);
@@ -761,8 +761,7 @@ const SettingsMenu = () => {
     if (file) {
       console.log("Файл аватара вибрано:", file.name, file.size);
       setPendingAvatarFile(file);
-      
-      // Показуємо превью
+
       const previewUrl = URL.createObjectURL(file);
       setAvatar(previewUrl);
     }
@@ -772,7 +771,7 @@ const SettingsMenu = () => {
   const handleCoverUpload = async (file: File) => {
     console.log("Файл обкладинки вибрано:", file.name, file.size);
     setPendingCoverFile(file);
-    
+
     // Показуємо превью
     const previewUrl = URL.createObjectURL(file);
     setCover(previewUrl);
@@ -826,12 +825,12 @@ const SettingsMenu = () => {
   }
 
   return (
-    <div 
+    <div
       className="flex w-full min-h-screen bg-transparent"
       suppressHydrationWarning={true}
     >
       <SettingsSidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      
+
       <main className="flex-1 flex flex-col lg:flex-row gap-16 px-4 md:px-8 pt-6 lg:pt-12 pb-16 w-full">
         {activeTab === 0 && (
           <SettingsPreferencesTab
@@ -951,17 +950,17 @@ const SettingsMenu = () => {
             disabled={saving || !hasChanges()}
             className={`
               px-6 py-3 rounded-xl font-medium text-white transition-all duration-200
-              ${saving 
-                ? "bg-gray-500 cursor-not-allowed" 
+              ${saving
+                ? "bg-gray-500 cursor-not-allowed"
                 : hasChanges()
                   ? "bg-[#4B7FCC] hover:bg-[#3c70bd] hover:scale-105"
                   : "bg-gray-500 cursor-not-allowed"
               }
             `}
           >
-            {saving 
-              ? "Збереження..." 
-              : hasChanges() 
+            {saving
+              ? "Збереження..."
+              : hasChanges()
                 ? `Зберегти ${(pendingAvatarFile || pendingCoverFile) ? "(з файлами)" : "зміни"}`
                 : "Немає змін"
             }

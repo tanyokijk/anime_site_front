@@ -1,84 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
+"use client";
+
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star } from "lucide-react";
 import Link from "next/link";
-
-const mockResults = [
-  {
-    id: 1,
-    title: "Звичайний роман у Коулуні",
-    enTitle: "Kowloon Generic Romance",
-    slug: "kowloon-generic-romance",
-    year: 2025,
-    type: "TV Серіал",
-    status: "Онгоінг",
-    statusColor: "bg-blue-500",
-    rating: 7.56,
-    image: "/assets/profile/mock-history-anime-card2.png",
-  },
-  {
-    id: 2,
-    title: "Як стати звичайним - 2 сезон",
-    enTitle: "Shoushimin Series 2nd Season",
-    slug: "shoushimin-series-2nd-season",
-    year: 2025,
-    type: "TV Серіал",
-    status: "Завершено",
-    statusColor: "bg-green-600",
-    rating: 8.05,
-    image: "/assets/profile/mock-history-anime-card.png",
-  },
-  {
-    id: 3,
-    title: "Як стати звичайним",
-    enTitle: "Shoushimin Series",
-    slug: "shoushimin-series",
-    year: 2024,
-    type: "TV Серіал",
-    status: "Завершено",
-    statusColor: "bg-green-600",
-    rating: 7.32,
-    image: "/assets/profile/mock-history-anime-card2.png",
-  },
-  {
-    id: 4,
-    title: "Як стати звичайним",
-    enTitle: "Shoushimin Series",
-    slug: "shoushimin-series",
-    year: 2024,
-    type: "TV Серіал",
-    status: "Завершено",
-    statusColor: "bg-green-600",
-    rating: 7.32,
-    image: "/assets/profile/mock-history-anime-card2.png",
-  },
-  {
-    id: 5,
-    title: "Як стати звичайним",
-    enTitle: "Shoushimin Series",
-    slug: "shoushimin-series",
-    year: 2024,
-    type: "TV Серіал",
-    status: "Завершено",
-    statusColor: "bg-green-600",
-    rating: 7.32,
-    image: "/assets/profile/mock-history-anime-card2.png",
-  },
-  {
-    id: 6,
-    title: "Як стати звичайним",
-    enTitle: "Shoushimin Series",
-    slug: "shoushimin-series",
-    year: 2024,
-    type: "TV Серіал",
-    status: "Завершено",
-    statusColor: "bg-green-600",
-    rating: 7.32,
-    image: "/assets/profile/mock-history-anime-card2.png",
-  },
-];
+import { API_BASE_URL } from "@/config";
 
 const categories = [
   {
@@ -174,8 +102,11 @@ const SearchModal: React.FC<Props> = ({ open, onClose }) => {
   const [category, setCategory] = useState("anime");
   const [dropdown, setDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState(mockResults);
+  const [results, setResults] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const modalRef = useRef<HTMLDivElement>(null);
+  const observer = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -188,21 +119,69 @@ const SearchModal: React.FC<Props> = ({ open, onClose }) => {
     };
   }, [open]);
 
-  useEffect(() => {
-    if (!open) return;
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        modalRef.current &&
-        !modalRef.current.contains(event.target as Node)
-      ) {
-        onClose();
-      }
+  const fetchResults = useCallback(async () => {
+    if (!query.trim()) {
+      setResults([]);
+      setLoading(false);
+      return;
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [open, onClose]);
+
+    setLoading(true);
+    try {
+      const endpoint = category === "anime" ? "animes" :
+                      category === "character" ? "characters" :
+                      category === "person" ? "people" :
+                      "users";
+      const url = `${API_BASE_URL}${endpoint}?q=${encodeURIComponent(query)}&per_page=10&page=${page}`;
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      setHasMore((data.meta?.current_page || 1) < (data.meta?.last_page || 1));
+
+      if (page === 1) {
+        setResults(data.data);
+      } else {
+        setResults(prev => [...prev, ...data.data]);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [query, category, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, category]);
+
+  useEffect(() => {
+    fetchResults();
+  }, [fetchResults]);
+
+  const lastResultRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (loading) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          setPage((prev) => prev + 1);
+        }
+      });
+      if (node) observer.current.observe(node);
+    },
+    [loading, hasMore]
+  );
 
   const Loader = () => (
     <div className="flex justify-center items-center h-40">
@@ -213,26 +192,6 @@ const SearchModal: React.FC<Props> = ({ open, onClose }) => {
       />
     </div>
   );
-
-  React.useEffect(() => {
-    if (query === "") {
-      setResults(mockResults);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    const timeout = setTimeout(() => {
-      setResults(
-        mockResults.filter(
-          (item) =>
-            item.title.toLowerCase().includes(query.toLowerCase()) ||
-            item.enTitle.toLowerCase().includes(query.toLowerCase())
-        )
-      );
-      setLoading(false);
-    }, 600);
-    return () => clearTimeout(timeout);
-  }, [query]);
 
   if (typeof window === "undefined") return null;
   return createPortal(
@@ -283,9 +242,7 @@ const SearchModal: React.FC<Props> = ({ open, onClose }) => {
                       <button
                         key={cat.key}
                         className={`flex items-center w-full gap-3 mb-1.5 last:mb-0 px-2 py-2 rounded-sm transition font-bold text-white text-sm ${
-                          category === cat.key
-                            ? "bg-[#23232A]"
-                            : "hover:bg-[#23232A]/60"
+                          category === cat.key ? "bg-[#23232A]" : "hover:bg-[#23232A]/60"
                         }`}
                         onClick={() => {
                           setCategory(cat.key);
@@ -293,9 +250,7 @@ const SearchModal: React.FC<Props> = ({ open, onClose }) => {
                         }}
                         style={{ minHeight: "48px" }}
                       >
-                        <span
-                          className={`flex items-center justify-center mr-1`}
-                        >
+                        <span className="flex items-center justify-center mr-1">
                           {category === cat.key ? (
                             <span className="w-6 h-6 bg-[#4B7FCC] rounded-sm flex items-center justify-center">
                               <svg
@@ -345,7 +300,6 @@ const SearchModal: React.FC<Props> = ({ open, onClose }) => {
                   className="bg-transparent outline-none text-white placeholder-gray-400 w-40 sm:w-60"
                 />
               </div>
-
               <button
                 onClick={onClose}
                 className="ml-auto text-gray-400 hover:text-white p-2"
@@ -378,23 +332,24 @@ const SearchModal: React.FC<Props> = ({ open, onClose }) => {
                     },
                   }}
                 >
-                  {results.map((item) => (
+                  {results.map((item, idx) => (
                     <motion.div
-                      key={item.id}
+                      key={item.id || idx}
                       variants={{
                         hidden: { opacity: 0, y: 20 },
                         visible: { opacity: 1, y: 0 },
                       }}
-                      className={`flex gap-4 rounded-2xl px-4 py-3 mb-3 transition-colors cursor-pointer hover:bg-[#2C2C30]`}
+                      className="flex gap-4 rounded-2xl px-4 py-3 mb-3 transition-colors cursor-pointer hover:bg-[#2C2C30]"
+                      ref={idx === results.length - 1 ? lastResultRef : null}
                     >
                       <Link
-                        href={`/anime/${item.slug}`}
+                        href={`/${category}/${item.slug}`}
                         className="flex gap-4 flex-1 min-w-0"
                         onClick={onClose}
                       >
                         <Image
-                          src={item.image}
-                          alt={item.title}
+                          src={item.poster || item.image || "/placeholder.jpg"}
+                          alt={item.name || item.title || item.username || "Item"}
                           width={70}
                           height={100}
                           className="rounded-xl object-cover w-[70px] h-[100px]"
@@ -403,33 +358,45 @@ const SearchModal: React.FC<Props> = ({ open, onClose }) => {
                           <div className="flex items-center gap-2 justify-between">
                             <div className="flex gap-2 min-w-0">
                               <span className="text-white font-semibold text-base leading-tight truncate">
-                                {item.title}
+                                {item.name || item.title || item.username || "Unknown"}
                               </span>
-                              <span className="text-gray-400 text-sm leading-tight truncate">
-                                / {item.enTitle}
-                              </span>
+                              {item.enTitle && (
+                                <span className="text-gray-400 text-sm leading-tight truncate">
+                                  / {item.enTitle}
+                                </span>
+                              )}
                             </div>
-                            <span className="flex items-center gap-1 text-white font-semibold text-lg min-w-[60px] justify-end">
-                              {item.rating.toFixed(2)}
-                              <Star
-                                className="w-5 h-5 text-white"
-                                fill="white"
-                              />
-                            </span>
+                            {(item.imdb_score || item.rating) && (
+                              <span className="flex items-center gap-1 text-white font-semibold text-lg min-w-[60px] justify-end">
+                                {(item.imdb_score || item.rating || 0).toFixed(2)}
+                                <Star
+                                  className="w-5 h-5 text-white"
+                                  fill="white"
+                                />
+                              </span>
+                            )}
                           </div>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-gray-300 text-sm">
-                              {item.year}
-                            </span>
-                            <span className="text-gray-400 text-xs">•</span>
-                            <span className="text-gray-300 text-sm">
-                              {item.type}
-                            </span>
-                            <span
-                              className={`ml-2 px-2 py-0.5 rounded-lg text-xs font-semibold text-white ${item.statusColor}`}
-                            >
-                              {item.status}
-                            </span>
+                            {item.year && (
+                              <>
+                                <span className="text-gray-300 text-sm">
+                                  {item.year}
+                                </span>
+                                <span className="text-gray-400 text-xs">•</span>
+                              </>
+                            )}
+                            {item.kind && (
+                              <span className="text-gray-300 text-sm">
+                                {item.kind}
+                              </span>
+                            )}
+                            {item.status && (
+                              <span
+                                className={`ml-2 px-2 py-0.5 rounded-lg text-xs font-semibold text-white ${item.statusColor || 'bg-gray-600'}`}
+                              >
+                                {item.status}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </Link>

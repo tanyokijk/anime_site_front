@@ -88,7 +88,7 @@ const TopAnimeCard: FC<TopAnimeCardProps> = ({
             </div>
 
             <div className="flex items-center text-[14px] font-semibold text-white">
-              {imdb_score.toFixed(2)}
+              {imdb_score?.toFixed(2)}
               <Star className="ml-1 h-[16px] w-[16px] fill-white text-white" />
             </div>
 

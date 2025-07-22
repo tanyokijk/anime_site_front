@@ -67,7 +67,7 @@ const itemsPerPage = 30;
 export default function StudioPage({ params }: { params: Promise<{ slug: string }> }) {
   // Розпаковуємо params за допомогою React.use()
   const resolvedParams = React.use(params);
-  
+
   const [filters, setFilters] = useState<FiltersState>({
     status: [],
     season: [],
@@ -214,16 +214,15 @@ export default function StudioPage({ params }: { params: Promise<{ slug: string 
       slug: resolvedParams.slug,
       filters
     });
-    
+
     setLoading(true);
     try {
       const queryParams = new URLSearchParams();
-  
+
       if (search?.trim()) queryParams.append("query", search.trim());
       queryParams.append("page", currentPage.toString());
       queryParams.append("per_page", itemsPerPage.toString());
-  
-      // Додаємо фільтри
+
       if (filters.status.length > 0) queryParams.append("status", filters.status.join(","));
       if (filters.season.length > 0) queryParams.append("season", filters.season.join(","));
       if (filters.genres.length > 0) queryParams.append("genres", filters.genres.join(","));
@@ -234,25 +233,25 @@ export default function StudioPage({ params }: { params: Promise<{ slug: string 
       if (filters.year[0]) queryParams.append("year_from", filters.year[0].toString());
       if (filters.year[1]) queryParams.append("year_to", filters.year[1].toString());
       if (filters.localized) queryParams.append("localized", "1");
-  
+
       const slugToUse = studioInfo?.slug || resolvedParams.slug;
       const url = `http://127.0.0.1:8000/api/v1/studios/${slugToUse}/animes?${queryParams.toString()}`;
-      
+
       console.log("📡 Відправляємо запит на URL:", url);
-  
+
       const res = await fetch(url);
       if (!res.ok) {
         console.error("❌ Помилка HTTP:", res.status, res.statusText);
         throw new Error(`Помилка ${res.status}: ${res.statusText}`);
       }
-  
+
       const json = await res.json();
       console.log("📥 Отримані дані:", json);
-  
+
       if (json.data && Array.isArray(json.data)) {
         console.log("✅ Знайдено аніме:", json.data.length);
         setAnimeList(json.data);
-  
+
         // Встановлюємо studioInfo, якщо ще не встановлено
         if (!studioInfo && json.data.length > 0) {
           const studio = json.data[0].studio;
@@ -264,7 +263,7 @@ export default function StudioPage({ params }: { params: Promise<{ slug: string 
             slug: studio.slug,
           });
         }
-  
+
         // Встановлюємо totalPages
         if (json.meta?.last_page) {
           setTotalPages(json.meta.last_page);

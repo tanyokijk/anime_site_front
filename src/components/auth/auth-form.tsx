@@ -9,6 +9,7 @@ import { AuthInput } from "@/components/auth/auth-input";
 import { Mail, Lock } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { API_BASE_URL } from "@/config";
 
 type AuthMode = "login" | "register";
 
@@ -19,21 +20,21 @@ interface AuthFormProps {
 export function AuthForm({ mode = "login" }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [touched, setTouched] = useState({ 
-    email: false, 
-    password: false 
+  const [touched, setTouched] = useState({
+    email: false,
+    password: false
   });
   const { login, register, loading, error } = useAuth();
   const router = useRouter();
 
   const isEmailValid = email.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isPasswordValid = password.length >= (mode === "register" ? 6 : 1);
-  
+
   const emailError = touched.email && !isEmailValid ? "Введіть дійсний e-mail" : "";
-  const passwordError = touched.password && !isPasswordValid 
-    ? mode === "register" 
-      ? "Пароль має бути не менше 6 символів" 
-      : "Введіть пароль" 
+  const passwordError = touched.password && !isPasswordValid
+    ? mode === "register"
+      ? "Пароль має бути не менше 6 символів"
+      : "Введіть пароль"
     : "";
 
   useEffect(() => {
@@ -45,7 +46,7 @@ export function AuthForm({ mode = "login" }: AuthFormProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setTouched({ email: true, password: true });
-    
+
     if (isEmailValid && isPasswordValid) {
       let success = false;
       if (mode === "login") {
@@ -54,7 +55,34 @@ export function AuthForm({ mode = "login" }: AuthFormProps) {
         // Для реєстрації передаємо email як ім'я (або пустий рядок, якщо потрібно)
         success = await register(email, email, password);
       }
-      
+
+      if (success && mode === "register") {
+      const token = localStorage.getItem('token');
+      console.log(token);
+      if (token) {
+        try {
+          const response = await fetch(`${API_BASE_URL}email/verification-notification`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          if (!response.ok) {
+            throw new Error(`Failed to send verification email: ${response.statusText}`);
+          }
+          const data = await response.json();
+          console.log('Verification email sent:', data);
+        } catch (error) {
+          console.error('Error sending verification email:', error);
+        }
+      } else {
+        console.error('No token found for verification email');
+      }
+      router.push("/verify-email");
+      return;
+    }
+
       if (success) {
         router.push("/");
       }
@@ -81,7 +109,7 @@ export function AuthForm({ mode = "login" }: AuthFormProps) {
             <span className="pl-2 text-xs text-red-500">{emailError}</span>
           )}
         </div>
-        
+
         <div className="grid gap-3">
           <AuthInput
             icon={Lock}
@@ -98,7 +126,7 @@ export function AuthForm({ mode = "login" }: AuthFormProps) {
           {passwordError && (
             <span className="pl-2 text-xs text-red-500">{passwordError}</span>
           )}
-          
+
           {mode === "login" && (
             <div className="flex items-center">
               <div className="flex items-center space-x-2">
@@ -112,27 +140,27 @@ export function AuthForm({ mode = "login" }: AuthFormProps) {
                 </Label>
               </div>
               <a
-                href="/reset"
+                href="/forgot-password"
                 className="ml-auto inline-block bg-transparent font-sans text-sm font-light text-white underline-offset-4 hover:underline"
               >
                 Забули пароль?
               </a>
             </div>
           )}
-          
+
           {mode === "register" && (
             <p className="text-xs text-gray-400">
               Пароль має бути не менше 6 символів
             </p>
           )}
         </div>
-        
+
         {error && (
           <div className="rounded-md bg-red-50 p-4 border border-red-200">
             <span className="text-sm text-red-600">{error}</span>
           </div>
         )}
-        
+
         <div className="flex justify-center">
           <Button
             type="submit"
@@ -148,12 +176,12 @@ export function AuthForm({ mode = "login" }: AuthFormProps) {
             )}
             disabled={loading || !isEmailValid || !isPasswordValid}
           >
-            {loading 
-              ? mode === "login" 
-                ? "Вхід..." 
-                : "Реєстрація..." 
-              : mode === "login" 
-                ? "Далі" 
+            {loading
+              ? mode === "login"
+                ? "Вхід..."
+                : "Реєстрація..."
+              : mode === "login"
+                ? "Далі"
                 : "Далі"}
           </Button>
         </div>

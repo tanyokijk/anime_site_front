@@ -28,7 +28,7 @@ interface Anime {
   first_air_date: string;
   kind: string;
   year: number;
-  slug: string; // Додано slug для навігації
+  slug: string;
   description?: string;
 }
 interface Episode {
@@ -51,8 +51,8 @@ interface Comment {
   created_at: string;
   text?: string;
   title: string;
-  url:string;
-  type:string;
+  url: string;
+  type: string;
 }
 interface User {
   id: string;
@@ -67,7 +67,7 @@ interface User {
 interface Tag {
   name: string;
   description: string;
-  slug:string;
+  slug: string;
   animes: AnimeShort[];
 }
 
@@ -77,7 +77,7 @@ interface Review {
   anime_name: string;
   number: number;
   review: string;
-} 
+}
 
 interface HomeData {
   five_anime: Anime[];
@@ -86,7 +86,7 @@ interface HomeData {
   top_10: Anime[];
   latest_comments: Comment[];
   new_animes: Anime[];
-  top_users:User[];
+  top_users: User[];
   release_calendar: Episode[];
   top_ongoings: Anime[];
   soon: Anime[];
@@ -94,10 +94,7 @@ interface HomeData {
   tags: Tag[];
   latest_reviews: Review[];
   recommended: Anime[];
-
-  // додай інші поля, якщо треба (top_10, latest_comments, тощо)
 }
-
 
 export default function Home() {
   const [data, setData] = useState<HomeData | null>(null);
@@ -121,52 +118,52 @@ export default function Home() {
 
   if (loading) return <div className="p-4">Завантаження...</div>;
   if (!data) return <div className="p-4">Помилка завантаження</div>;
-  const groupedByMonth = data.release_calendar.reduce((acc, episode) => {
-    if (!acc[episode.month]) {
-      acc[episode.month] = [];
-    }
-    acc[episode.month].push(episode);
-    return acc;
-  }, {} as Record<string, typeof data.release_calendar>);
+  const groupedByMonth = data.release_calendar.reduce(
+    (acc, episode) => {
+      if (!acc[episode.month]) {
+        acc[episode.month] = [];
+      }
+      acc[episode.month].push(episode);
+      return acc;
+    },
+    {} as Record<string, typeof data.release_calendar>,
+  );
 
   return (
-    <div className="p-0 m-0 font-[family-name:var(--font-geist-sans)]">
-
-      <AnimeCarousel 
-  slides={data.five_anime.map
-  (anime => ({
-    id: anime.id,
-    name: anime.name,
-    description: anime.description || "",
-    poster: anime.poster,
-    related_seasons_count: anime.related_seasons_count || 0,
-    slug: anime.slug
-  }))
-  } 
-  loading={loading}
-  error={null}
-/>
+    <div className="m-0 p-0 font-[family-name:var(--font-geist-sans)]">
+      <AnimeCarousel
+        slides={data.five_anime.map((anime) => ({
+          id: anime.id,
+          name: anime.name,
+          description: anime.description || "",
+          poster: anime.poster,
+          related_seasons_count: anime.related_seasons_count || 0,
+          slug: anime.slug,
+        }))}
+        loading={loading}
+        error={null}
+      />
 
       {Array.isArray(data.recommended) && data.recommended.length > 0 && (
-      <CardCollection
-        title="Продовжуйте дивитись"
-        items={data.continue_watching.map((anime) => ({
-          id: anime.id,
-          title: anime.name,
-          image: anime.poster,
-          imdbRating: anime.imdb_score,
-          duration: anime.duration,
-          seasons:anime.related_seasons_count,
-          slug: anime.slug
-        }))}
-        cardType="continue-watching"
-        showButton={true}
-        buttonText="Переглянути весь список"
-        buttonUrl="/continue-watching"
-      />
+        <CardCollection
+          title="Продовжуйте дивитись"
+          items={data.continue_watching.map((anime) => ({
+            id: anime.id,
+            title: anime.name,
+            image: anime.poster,
+            imdbRating: anime.imdb_score,
+            duration: anime.duration,
+            seasons: anime.related_seasons_count,
+            slug: anime.slug,
+          }))}
+          cardType="continue-watching"
+          showButton={true}
+          buttonText="Переглянути весь список"
+          buttonUrl="/continue-watching"
+        />
       )}
 
-       <CardCollection
+      <CardCollection
         title="Популярне зараз"
         items={data.popular_now.map((anime) => ({
           id: anime.id,
@@ -174,7 +171,7 @@ export default function Home() {
           image: anime.poster,
           imdbRating: anime.imdb_score,
           duration: anime.duration,
-          seasons:anime.related_seasons_count,
+          seasons: anime.related_seasons_count,
           slug: anime.slug,
         }))}
         cardType="anime"
@@ -188,7 +185,7 @@ export default function Home() {
           image: anime.poster,
           imdbRating: anime.imdb_score,
           duration: anime.duration,
-          seasons:anime.related_seasons_count,
+          seasons: anime.related_seasons_count,
           slug: anime.slug,
         }))}
         cardType="anime"
@@ -197,19 +194,19 @@ export default function Home() {
         buttonUrl="/anonce"
       />
 
-      <TopAnimeList items=
-      {data.top_10} showRank={false} />
+      <TopAnimeList items={data.top_10} showRank={false} />
 
       <CommentCollection comments={data.latest_comments} />
 
-      <CardCollection title="Новинки"
+      <CardCollection
+        title="Новинки"
         items={data.popular_now.map((anime) => ({
           id: anime.id,
           title: anime.name,
           image: anime.poster,
           imdbRating: anime.imdb_score,
           duration: anime.duration,
-          seasons:anime.related_seasons_count,
+          seasons: anime.related_seasons_count,
           slug: anime.slug,
         }))}
         cardType="anime"
@@ -218,29 +215,29 @@ export default function Home() {
       <TopUserList users={data.top_users} />
 
       <section className="relative">
-    <h1 className="text-white text-2xl font-bold pl-6.5">
-      Календар релізів
-    </h1>
+        <h1 className="pl-6.5 text-2xl font-bold text-white">
+          Календар релізів
+        </h1>
 
-    {Object.entries(groupedByMonth).map(([month, episodes]) => (
-      <CardCollection
-        key={month}
-        items={episodes.map((episode) => ({
-          id: episode.id,
-          anime_id: episode.anime_id,
-          anime_name: episode.anime_name,
-          air_date: episode.air_date,
-          month: episode.month,
-          number: episode.number,
-          slug: episode.slug,
-          anime_poster: episode.anime_poster,
-        }))}
-        cardType="release"
-        title={month}
-        showButton={false}
-      />
-    ))}
-  </section>
+        {Object.entries(groupedByMonth).map(([month, episodes]) => (
+          <CardCollection
+            key={month}
+            items={episodes.map((episode) => ({
+              id: episode.id,
+              anime_id: episode.anime_id,
+              anime_name: episode.anime_name,
+              air_date: episode.air_date,
+              month: episode.month,
+              number: episode.number,
+              slug: episode.slug,
+              anime_poster: episode.anime_poster,
+            }))}
+            cardType="release"
+            title={month}
+            showButton={false}
+          />
+        ))}
+      </section>
 
       <CardCollection
         title="Топ онґоінґи"
@@ -250,27 +247,27 @@ export default function Home() {
           image: anime.poster,
           imdbRating: anime.imdb_score,
           duration: anime.duration,
-          seasons:anime.related_seasons_count,
+          seasons: anime.related_seasons_count,
           slug: anime.slug,
         }))}
         cardType="anime"
       />
 
-{Array.isArray(data.recommended) && data.recommended.length > 0 && (
-  <CardCollection
-    title="Рекомендації для вас"
-    items={data.recommended.map((anime) => ({
-      id: anime.id,
-      title: anime.name,
-      image: anime.poster,
-      imdbRating: anime.imdb_score,
-      duration: anime.duration,
-      seasons: anime.related_seasons_count,
-      slug: anime.slug,
-    }))}
-    cardType="anime"
-  />
-)}
+      {Array.isArray(data.recommended) && data.recommended.length > 0 && (
+        <CardCollection
+          title="Рекомендації для вас"
+          items={data.recommended.map((anime) => ({
+            id: anime.id,
+            title: anime.name,
+            image: anime.poster,
+            imdbRating: anime.imdb_score,
+            duration: anime.duration,
+            seasons: anime.related_seasons_count,
+            slug: anime.slug,
+          }))}
+          cardType="anime"
+        />
+      )}
 
       <CardCollection
         title="Жанри сайту"
@@ -279,7 +276,6 @@ export default function Home() {
           description: genre.description,
           slug: genre.slug,
           animes_posters: genre.animes,
-          
         }))}
         cardType="genre"
         showButton={true}
@@ -297,12 +293,11 @@ export default function Home() {
         }))}
         cardType="genre"
         showButton={true}
-        buttonText="Переглянути всі жанри"
-        buttonUrl="/genres"
+        buttonText="Переглянути всі теги"
+        buttonUrl="/tags"
       />
 
       <ReviewSection reviews={data.latest_reviews} />
     </div>
   );
 }
-

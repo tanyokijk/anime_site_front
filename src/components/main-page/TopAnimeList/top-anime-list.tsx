@@ -4,6 +4,7 @@ import TopAnimeCard from "./top-anime-card";
 interface Anime {
   id: string;
   name: string;
+  slug:string;
   poster: string;
   imdb_score: number;
   duration?: number;
@@ -44,7 +45,7 @@ const TopAnimeList: React.FC<TopAnimeListProps> = ({
         </div>
       </div>
 
-      <div className="flex justify-end mb-8 xs:mb-4 px-2">
+      {/* <div className="flex justify-end mb-8 xs:mb-4 px-2">
         <button className="flex items-center gap-2 text-white px-4 py-2 rounded-xl border border-[#918C8C80] text-lg xs:text-sm">
           {filterLabel}
           <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
@@ -57,7 +58,7 @@ const TopAnimeList: React.FC<TopAnimeListProps> = ({
             />
           </svg>
         </button>
-      </div>
+      </div> */}
 
       <div className="w-full px-2">
         <div className="grid lg:grid-cols-5 md:grid-cols-3 grid-cols-2 gap-x-6 gap-y-10 xs:gap-x-4 xs:gap-y-6">
@@ -65,6 +66,7 @@ const TopAnimeList: React.FC<TopAnimeListProps> = ({
             <TopAnimeCard
               key={anime.name + idx}
               image={anime.poster}
+              slug={anime.slug}
               title={anime.name}
               year={anime.year}
               kind={anime.kind}

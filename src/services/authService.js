@@ -185,3 +185,95 @@ export async function logoutUser() {
     throw error;
   }
 }
+
+export async function forgotPassword(email) {
+  try {
+    await getCsrfCookie();
+
+    const token = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("XSRF-TOKEN="))
+      ?.split("=")[1];
+
+    if (!token) {
+      throw new Error("CSRF token not found");
+    }
+
+    const response = await fetch(`${API_URL}/api/v1/auth/forgot-password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+        "X-XSRF-TOKEN": decodeURIComponent(token),
+      },
+      credentials: "include",
+      body: JSON.stringify({ email }),
+    });
+
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const errorText = await response.text();
+      console.error("Non-JSON response:", errorText);
+      throw new Error("Server returned an invalid response format");
+    }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Не вдалося відправити посилання для відновлення пароля");
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    throw error;
+  }
+}
+
+// Оновлення пароля (reset-password)
+export async function resetPassword(email, password, token) {
+  try {
+    await getCsrfCookie();
+
+    const xsrfToken = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("XSRF-TOKEN="))
+      ?.split("=")[1];
+
+    if (!xsrfToken) {
+      throw new Error("CSRF token not found");
+    }
+
+    const response = await fetch(`${API_URL}/api/v1/auth/reset-password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+        "X-XSRF-TOKEN": decodeURIComponent(xsrfToken),
+      },
+      credentials: "include",
+      body: JSON.stringify({ email, password, token }),
+    });
+
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const errorText = await response.text();
+      console.error("Non-JSON response:", errorText);
+      throw new Error("Server returned an invalid response format");
+    }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Не вдалося оновити пароль");
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Reset password error:", error);
+    throw error;
+  }
+}
+

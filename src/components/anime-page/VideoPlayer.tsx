@@ -1,7 +1,7 @@
 "use client";
 import React, { useRef, useState, useEffect } from "react";
 import ReactPlayer from "react-player";
-import { useParams } from 'react-router-dom';
+import { useParams } from "next/navigation";
 function VideoPlayer({
   url,
   isLightOn,
@@ -58,33 +58,40 @@ function VideoPlayer({
   };
 
 const handlePlayPause = () => {
-    const newPlayingState = !playing;
-    setPlaying(newPlayingState);
+  console.log("handlePlayPause called");
+  const newPlayingState = !playing;
+  setPlaying(newPlayingState);
 
-    // Надсилаємо прогрес при паузі
-    if (!newPlayingState) {
-      const token = localStorage.getItem('token');
-      if (token && slug && episodeSlug) {
-        const currentTime = playerRef.current?.getCurrentTime() || 0;
-        const progressTime = Math.round(currentTime);
-        console.log(`Updating progress for episode ${episodeSlug} of anime ${slug} to ${progressTime}s`);
-        fetch(`http://127.0.0.1:8000/api/v1/episodes/${encodeURIComponent(episodeSlug)}/progress?progress_time=${progressTime}`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+  if (!newPlayingState) {
+    const token = localStorage.getItem('token');
+    console.log("Token:", token);
+    console.log("Slug:", slug);
+    console.log("EpisodeSlug:", episodeSlug);
+    if (token && slug && episodeSlug) {
+      const currentTime = playerRef.current?.getCurrentTime() || 0;
+      const progressTime = Math.round(currentTime);
+      console.log(`Updating progress for episode ${episodeSlug} of anime ${slug} to ${progressTime}s`);
+      fetch(`http://127.0.0.1:8000/api/v1/episodes/${encodeURIComponent(episodeSlug)}/progress`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ progress_time: progressTime }),
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error('Failed to update progress');
+          return res.json();
         })
-          .then((res) => {
-            if (!res.ok) throw new Error('Failed to update progress');
-          })
-          .catch((error) => {
-            console.error('Progress update error:', error);
-          });
-          console.log(`Progress updated for episode ${episodeSlug} of anime ${slug}`);
-      }
+        .then((data) => {
+          console.log(`Progress updated for episode ${episodeSlug} of anime ${slug}:`, data);
+        })
+        .catch((error) => {
+          console.error('Progress update error:', error);
+        });
     }
-  };
+  }
+};
   const handleMute = () => setMuted(!muted);
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setVolume(parseFloat(e.target.value));

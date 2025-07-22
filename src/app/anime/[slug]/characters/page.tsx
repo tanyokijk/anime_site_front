@@ -29,9 +29,9 @@ interface AnimeBasicInfo {
 export default function CharactersAnimePage() {
   const params = useParams();
   const slug = params && typeof params.slug === 'string' ? params.slug : '';
-  
+
   const [characters, setCharacters] = useState<Character[]>([]);
-    const [tags, setTags] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
   const [anime, setAnime] = useState<AnimeBasicInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,26 +39,26 @@ export default function CharactersAnimePage() {
   useEffect(() => {
     async function fetchData() {
       if (!slug) return;
-      
+
       setLoading(true);
       setError(null);
-      
+
       try {
         // Паралельно завантажуємо дані про аніме та персонажів
-        const [animeResponse,tagsRes, charactersResponse] = await Promise.all([
+        const [animeResponse, tagsRes, charactersResponse] = await Promise.all([
           fetch(`${API_BASE_URL}animes/${slug}`, { cache: "no-store" }),
           fetch(`${API_BASE_URL}animes/${slug}/tags`, { cache: "no-store" }),
           fetch(`${API_BASE_URL}animes/${slug}/characters`, { cache: "no-store" })
         ]);
-        
+
         if (!animeResponse.ok) {
           throw new Error(`Помилка завантаження аніме: ${animeResponse.status}`);
         }
-        
+
         if (!charactersResponse.ok) {
           throw new Error(`Помилка завантаження персонажів: ${charactersResponse.status}`);
         }
-        
+
         const animeData = await animeResponse.json();
         const charactersData = await charactersResponse.json();
         const tagsJson = await tagsRes.json();
@@ -82,6 +82,7 @@ export default function CharactersAnimePage() {
       <div className="min-h-screen w-full text-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-10 px-4 py-10 md:flex-row">
           <AnimePosterSection
+            animeId={anime?.id}
             poster=""
             name="Завантаження..."
             isLoading={true}

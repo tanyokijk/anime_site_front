@@ -78,7 +78,7 @@ const TopAnimeCard = forwardRef<HTMLDivElement, TopAnimeCardProps>(({
 
         {/* Рейтинг */}
         <div className="flex items-center text-[14px] font-semibold text-white">
-          {rating.toFixed(2)}
+          {rating?.toFixed(2)}
           <Star className="ml-1 h-[16px] w-[16px] fill-white text-white" />
         </div>
       </div>

@@ -1,6 +1,7 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { BACKEND_BASE_URL, API_BASE_URL } from "@/config";
+import { forgotPassword, resetPassword } from '../services/authService';
 
 // Laravel API error response types
 interface LaravelValidationErrors {
@@ -71,6 +72,8 @@ interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   setAuthData: (user: User, token: string) => void;
+  forgotPassword: (email: string) => Promise<boolean>;
+  resetPassword: (email: string, password: string, token: string) => Promise<boolean>;
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
@@ -174,11 +177,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const login = async (email: string, password: string): Promise<boolean> => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const url = `${API_BASE_URL}auth/login`;
       const requestBody = { email, password };
-      
+
       console.log('Login request:', {
         url,
         method: 'POST',
@@ -204,14 +207,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!res.ok) {
         const errorText = await res.text();
         console.log('Login error response:', errorText);
-        
+
         let errorData: LaravelErrorResponse = {};
         try {
           errorData = JSON.parse(errorText);
         } catch {
           console.log('Could not parse error response as JSON');
         }
-        
+
         let message = "Невдала спроба входу. Спробуйте ще раз.";
         if (errorData.message?.toLowerCase().includes("auth.failed")) {
           message = "Неправильний email або пароль.";
@@ -223,7 +226,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const responseText = await res.text();
       console.log('Login success response:', responseText);
-      
+
       const data: LoginResponse = JSON.parse(responseText);
       if (!data.user || !data.token) throw new Error("Некоректна відповідь від сервера");
 
@@ -243,13 +246,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     try {
       const url = `${API_BASE_URL}auth/register`;
-      const requestBody = { 
-        name, 
-        email, 
+      const requestBody = {
+        name,
+        email,
         password,
         password_confirmation: password
       };
-      
+
       console.log('Register request:', {
         url,
         method: 'POST',
@@ -275,14 +278,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!response.ok) {
         const errorText = await response.text();
         console.log('Register error response:', errorText);
-        
+
         let errorData: LaravelErrorResponse = {};
         try {
           errorData = JSON.parse(errorText);
         } catch {
           console.log('Could not parse error response as JSON');
         }
-        
+
         let message = "Помилка реєстрації. Спробуйте ще раз.";
 
         if (errorData.message) {
@@ -298,7 +301,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const responseText = await response.text();
       console.log('Register success response:', responseText);
-      
+
       const data: RegisterResponse = JSON.parse(responseText);
 
       if (!data.user || !data.token) {
@@ -356,6 +359,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         register,
         logout,
         setAuthData: saveAuthData,
+        forgotPassword,
+        resetPassword,
         loading,
         error,
         isAuthenticated,
@@ -381,14 +386,20 @@ export const createAuthenticatedFetch = (token: string) => async (
   url: string,
   options: RequestInit = {}
 ) => {
+  const headers = {
+    Accept: "application/json",
+    Authorization: `Bearer ${token}`,
+    ...(options.headers || {}),
+  };
+
+  // Не встановлюємо Content-Type для FormData, щоб браузер зробив це автоматично
+  if (!(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+
   return fetch(url, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      Authorization: `Bearer ${token}`,
-      ...(options.headers || {}),
-    },
+    headers,
   });
 };
 

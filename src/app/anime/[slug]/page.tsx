@@ -35,7 +35,7 @@ interface Person {
   image?: string;
   birthday?: string | null;
   age?: number | null;
-  type: string; // "character" або інші
+  type: string;
 }
 
 interface User {
@@ -108,25 +108,25 @@ interface AnimeDetails {
 // Функція для отримання токена користувача
 function getUserToken(): string | null {
   console.log("🔍 Пошук токена користувача...");
-  
+
   // Спробуйте отримати токен з localStorage
   try {
-    const token = localStorage.getItem('token') || 
-                  localStorage.getItem('authToken') || 
+    const token = localStorage.getItem('token') ||
+                  localStorage.getItem('authToken') ||
                   localStorage.getItem('access_token') ||
                   localStorage.getItem('user_token');
-    
+
     console.log("🔑 Токен з localStorage:", token ? "знайдений" : "не знайдений");
     return token;
   } catch (error) {
     console.error("❌ Помилка читання localStorage:", error);
     return null;
   }
-  
+
   // TODO: Якщо ви використовуєте Redux/Zustand/Context - додайте тут відповідну логіку
   // Приклад з Redux:
   // const token = useSelector((state: RootState) => state.auth.token);
-  
+
   // Приклад з Context:
   // const { token } = useContext(AuthContext);
 }
@@ -155,7 +155,7 @@ export default function AnimePage() {
   }, []);
 
   async function fetchAnimeData(slug: string) {
-    setIsLoading(true); 
+    setIsLoading(true);
     try {
       if (!slug) {
         setAnime(null);
@@ -170,7 +170,7 @@ export default function AnimePage() {
       ]);
 
       if (!animeRes.ok) {
-        setAnime(null); 
+        setAnime(null);
         setTags([]);
         setIsLoading(false);
         return;
@@ -181,7 +181,7 @@ export default function AnimePage() {
 
       setAnime(animeJson.data);
       setTags(tagsJson.data || []);
-      
+
       console.log("📺 Аніме завантажено:", {
         id: animeJson.data?.id,
         name: animeJson.data?.name,
@@ -189,7 +189,7 @@ export default function AnimePage() {
       });
     } catch (error) {
       console.error("Error loading anime data:", error);
-      setAnime(null); 
+      setAnime(null);
       setTags([]);
     } finally {
       setIsLoading(false);
@@ -222,8 +222,10 @@ export default function AnimePage() {
         {/* Left: Poster */}
         <AnimePosterSection
           poster={anime.poster}
+          animeId={anime.id}
           name={anime.name}
           isLoading={isLoading}
+          token={userToken ?? undefined} 
         />
 
         {/* Center: Main info */}
@@ -254,7 +256,7 @@ export default function AnimePage() {
             animeName={anime.name}
             animeId={anime.id}
             isLoading={isLoading}
-            token={userToken ?? undefined} 
+            token={userToken ?? undefined}
           />
           {/* ✅ ВИПРАВЛЕНО: Додаємо потрібні параметри */}
           <AnimeCommentSection
